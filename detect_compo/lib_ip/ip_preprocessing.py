@@ -4,6 +4,31 @@ from config.CONFIG_UIED import Config
 C = Config()
 
 
+def read_img2(npimg, resize_height=None, kernel_size=None):
+
+    def resize_by_height(org):
+        w_h_ratio = org.shape[1] / org.shape[0]
+        resize_w = resize_height * w_h_ratio
+        re = cv2.resize(org, (int(resize_w), int(resize_height)))
+        return re
+
+    try:
+        if kernel_size is not None:
+            npimg = cv2.medianBlur(npimg, kernel_size)
+        if npimg is None:
+            print("*** Image does not exist ***")
+            return None, None
+        if resize_height is not None:
+            npimg = resize_by_height(npimg)
+        gray = cv2.cvtColor(npimg, cv2.COLOR_BGR2GRAY)
+        return npimg, gray
+
+    except Exception as e:
+        print(e)
+        print("*** Img Reading Failed ***\n")
+        return None, None
+
+
 def read_img(path, resize_height=None, kernel_size=None):
 
     def resize_by_height(org):

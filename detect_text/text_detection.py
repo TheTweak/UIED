@@ -8,8 +8,7 @@ import os
 from os.path import join as pjoin
 
 
-def save_detection_json(file_path, texts, img_shape):
-    f_out = open(file_path, 'w')
+def create_detection_json(texts, img_shape):
     output = {'img_shape': img_shape, 'texts': []}
     for text in texts:
         c = {'id': text.id, 'content': text.content}
@@ -18,7 +17,12 @@ def save_detection_json(file_path, texts, img_shape):
         c['width'] = text.width
         c['height'] = text.height
         output['texts'].append(c)
-    json.dump(output, f_out, indent=4)
+    return output
+
+
+def save_detection_json(file_path, texts, img_shape):
+    f_out = open(file_path, 'w')
+    json.dump(create_detection_json(texts, img_shape), f_out, indent=4)
 
 
 def visualize_texts(org_img, texts, shown_resize_height=None, show=False, write_path=None):
@@ -132,14 +136,15 @@ def text_detection(input_file='../data/input/30800.jpg', output_file='../data/ou
     :param method: google or paddle
     :param paddle_model: the preload paddle model for paddle ocr
     '''
-    start = time.clock()
+    start = time.monotonic()
     name = input_file.split('/')[-1][:-4]
     ocr_root = pjoin(output_file, 'ocr')
     img = cv2.imread(input_file)
 
     if method == 'google':
         print('*** Detect Text through Google OCR ***')
-        ocr_result = ocr.ocr_detection_google(input_file)
+        # ocr_result = ocr.ocr_detection_google(input_file)
+        ocr_result = ocr.ocr_detection_yc(input_file)
         texts = text_cvt_orc_format(ocr_result)
         texts = merge_intersected_texts(texts)
         texts = text_filter_noise(texts)
@@ -157,8 +162,17 @@ def text_detection(input_file='../data/input/30800.jpg', output_file='../data/ou
 
     visualize_texts(img, texts, shown_resize_height=800, show=show, write_path=pjoin(ocr_root, name+'.png'))
     save_detection_json(pjoin(ocr_root, name+'.json'), texts, img.shape)
-    print("[Text Detection Completed in %.3f s] Input: %s Output: %s" % (time.clock() - start, input_file, pjoin(ocr_root, name+'.json')))
+    print("[Text Detection Completed in %.3f s] Input: %s Output: %s" % (time.monotonic() - start, input_file, pjoin(ocr_root, name+'.json')))
 
 
-# text_detection()
+def text_detection2(img, img_shape):
+    start = time.monotonic()
 
+    ocr_result = ocr.ocr_detection_yc2(img)
+    texts = text_cvt_orc_format(ocr_result)
+    texts = merge_intersected_texts(texts)
+    texts = text_filter_noise(texts)
+    texts = text_sentences_recognition(texts)
+
+    print("[Text Detection Completed in %.3f s]" % (time.monotonic() - start))
+    return create_detection_json(texts, img_shape)

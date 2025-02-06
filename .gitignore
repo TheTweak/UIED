@@ -1,0 +1,3 @@
+data/output/
+.vscode/launch.json
+**/__pycache__

@@ -2,6 +2,8 @@ from os.path import join as pjoin
 import cv2
 import os
 import numpy as np
+import mss
+import time
 
 
 def resize_height_by_longest_edge(img_path, resize_length=800):
@@ -29,7 +31,6 @@ def color_tips():
 
 
 if __name__ == '__main__':
-
     '''
         ele:min-grad: gradient threshold to produce binary map         
         ele:ffl-block: fill-flood threshold
@@ -51,7 +52,8 @@ if __name__ == '__main__':
                   'merge-contained-ele':True, 'merge-line-to-paragraph':False, 'remove-bar':True}
 
     # set input image path
-    input_path_img = 'data/input/497.jpg'
+    # input_path_img = 'data/input/497.jpg'
+    input_path_img = 'data/pg/steam.jpg'
     output_root = 'data/output'
 
     resized_height = resize_height_by_longest_edge(input_path_img, resize_length=800)
@@ -65,7 +67,7 @@ if __name__ == '__main__':
     if is_ocr:
         import detect_text.text_detection as text
         os.makedirs(pjoin(output_root, 'ocr'), exist_ok=True)
-        text.text_detection(input_path_img, output_root, show=True, method='google')
+        text.text_detection(input_path_img, output_root, show=False, method='google')
 
     if is_ip:
         import detect_compo.ip_region_proposal as ip
@@ -87,5 +89,12 @@ if __name__ == '__main__':
         name = input_path_img.split('/')[-1][:-4]
         compo_path = pjoin(output_root, 'ip', str(name) + '.json')
         ocr_path = pjoin(output_root, 'ocr', str(name) + '.json')
-        merge.merge(input_path_img, compo_path, ocr_path, pjoin(output_root, 'merge'),
-                    is_remove_bar=key_params['remove-bar'], is_paragraph=key_params['merge-line-to-paragraph'], show=True)
+        fimage, _ = merge.merge(input_path_img, compo_path, ocr_path, pjoin(output_root, 'merge'),
+                    is_remove_bar=key_params['remove-bar'], is_paragraph=key_params['merge-line-to-paragraph'], show=False)
+        print(f"fimage shape: {fimage.shape}")
+        while True:
+            cv2.imshow("result", fimage)
+            if cv2.waitKey(25) > 0:
+                cv2.destroyWindow("result")
+                break
+                

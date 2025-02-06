@@ -5,38 +5,84 @@ import json
 from base64 import b64encode
 import time
 
+YC_FOLDER = os.getenv("YC_FOLDER_ID")
+assert YC_FOLDER
+YC_IAM_TOKEN = os.getenv("YC_IAM_TOKEN")
+assert YC_IAM_TOKEN
 
-def Google_OCR_makeImageData(imgpath):
-    with open(imgpath, 'rb') as f:
-        ctxt = b64encode(f.read()).decode()
-        img_req = {
-            'image': {
-                'content': ctxt
-            },
-            'features': [{
-                'type': 'DOCUMENT_TEXT_DETECTION',
-                # 'type': 'TEXT_DETECTION',
-                'maxResults': 1
-            }]
-        }
-    return json.dumps({"requests": img_req}).encode()
+def YC_OCR_makeImageData(imgpath):
+  with open(imgpath, 'rb') as fid:
+      file_content = fid.read()
+  return b64encode(file_content).decode('utf-8')
 
 
-def ocr_detection_google(imgpath):
-    start = time.clock()
-    url = 'https://vision.googleapis.com/v1/images:annotate'
-    api_key = 'AIzaSyDUc4iOUASJQYkVwSomIArTKhE2C6bHK8U'             # *** Replace with your own Key ***
-    imgdata = Google_OCR_makeImageData(imgpath)
-    response = requests.post(url,
-                             data=imgdata,
-                             params={'key': api_key},
-                             headers={'Content_Type': 'application/json'})
-    # print('*** Text Detection Time Taken:%.3fs ***' % (time.clock() - start))
-    print("*** Please replace the Google OCR key at detect_text/ocr.py line 28 with your own (apply in https://cloud.google.com/vision) ***")
-    if 'responses' not in response.json():
-        raise Exception(response.json())
-    if response.json()['responses'] == [{}]:
-        # No Text
-        return None
-    else:
-        return response.json()['responses'][0]['textAnnotations'][1:]
+def ocr_detection_yc2(img):
+    enc_img = b64encode(img).decode('utf-8')
+    data = {"mimeType": "JPEG",
+            "languageCodes": ["*"],
+            "content": enc_img}
+
+    url = "https://ocr.api.cloud.yandex.net/ocr/v1/recognizeText"
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer {:s}".format(YC_IAM_TOKEN),
+        "x-folder-id": YC_FOLDER,
+        "x-data-logging-enabled": "true"
+    }
+    start = time.monotonic()
+    w = requests.post(url=url, headers=headers, data=json.dumps(data))
+    w.raise_for_status()
+    print('*** Text Detection Time Taken:%.3fs ***' % (time.monotonic() - start))
+    result = []
+    for block in w.json()["result"]["textAnnotation"]["blocks"]:
+        #print(json.dumps(block, indent=2))
+        for line in block["lines"]:
+            for w in line.get("words", []):
+                verts =[{"x": int(v["x"]), "y": int(v["y"])} for v in w["boundingBox"]["vertices"]]                
+                result.append({
+                    "description": w["text"],
+                    "boundingPoly": {
+                        "vertices": verts
+                    }
+                })
+
+    return result
+
+
+def ocr_detection_yc(imgpath):
+    data = {"mimeType": "JPEG",
+            "languageCodes": ["*"],
+            "content": YC_OCR_makeImageData(imgpath)}
+
+    url = "https://ocr.api.cloud.yandex.net/ocr/v1/recognizeText"
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer {:s}".format(YC_IAM_TOKEN),
+        "x-folder-id": YC_FOLDER,
+        "x-data-logging-enabled": "true"
+    }
+    start = time.monotonic()
+    w = requests.post(url=url, headers=headers, data=json.dumps(data))
+    w.raise_for_status()
+    print('*** Text Detection Time Taken:%.3fs ***' % (time.monotonic() - start))
+    result = []
+    for block in w.json()["result"]["textAnnotation"]["blocks"]:
+        #print(json.dumps(block, indent=2))
+        for line in block["lines"]:
+            for w in line.get("words", []):
+                verts =[{"x": int(v["x"]), "y": int(v["y"])} for v in w["boundingBox"]["vertices"]]                
+                result.append({
+                    "description": w["text"],
+                    "boundingPoly": {
+                        "vertices": verts
+                    }
+                })
+
+    return result
+
+
+if __name__ == "__main__":
+    r = ocr_detection_yc("C:\\Users\\thetweak\\source\\UIED\\data\\input\\497.jpg")
+    print(r)

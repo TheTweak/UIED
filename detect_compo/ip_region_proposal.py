@@ -40,7 +40,7 @@ def nesting_inspection(org, grey, compos, ffl_block):
 def compo_detection(input_img_path, output_root, uied_params,
                     resize_by_height=800, classifier=None, show=False, wai_key=0):
 
-    start = time.clock()
+    start = time.monotonic()
     name = input_img_path.split('/')[-1][:-4] if '/' in input_img_path else input_img_path.split('\\')[-1][:-4]
     ip_root = file.build_directory(pjoin(output_root, "ip"))
 
@@ -88,4 +88,37 @@ def compo_detection(input_img_path, output_root, uied_params,
     # *** Step 7 *** save detection result
     Compo.compos_update(uicompos, org.shape)
     file.save_corners_json(pjoin(ip_root, name + '.json'), uicompos)
-    print("[Compo Detection Completed in %.3f s] Input: %s Output: %s" % (time.clock() - start, input_img_path, pjoin(ip_root, name + '.json')))
+    print("[Compo Detection Completed in %.3f s] Input: %s Output: %s" % (time.monotonic() - start, input_img_path, pjoin(ip_root, name + '.json')))
+
+
+def compo_detection2(npimg, uied_params, resize_by_height=800, show=False, wai_key=0):
+
+    start = time.monotonic()
+
+    # *** Step 1 *** pre-processing: read img -> get binary map
+    org, grey = pre.read_img2(npimg, resize_by_height)
+    binary = pre.binarization(org, grad_min=int(uied_params['min-grad']))
+
+    # *** Step 2 *** element detection
+    det.rm_line(binary, show=show, wait_key=wai_key)
+    uicompos = det.component_detection(binary, min_obj_area=int(uied_params['min-ele-area']))
+
+    # *** Step 3 *** results refinement
+    uicompos = det.compo_filter(uicompos, min_area=int(uied_params['min-ele-area']), img_shape=binary.shape)
+    uicompos = det.merge_intersected_compos(uicompos)
+    det.compo_block_recognition(binary, uicompos)
+    if uied_params['merge-contained-ele']:
+        uicompos = det.rm_contained_compos_not_in_block(uicompos)
+    Compo.compos_update(uicompos, org.shape)
+    Compo.compos_containment(uicompos)
+
+    # *** Step 4 ** nesting inspection: check if big compos have nesting element
+    uicompos += nesting_inspection(org, grey, uicompos, ffl_block=uied_params['ffl-block'])
+    Compo.compos_update(uicompos, org.shape)
+    draw.draw_bounding_box2(org, uicompos)
+
+    # *** Step 7 *** save detection result
+    Compo.compos_update(uicompos, org.shape)
+    print("[Compo Detection Completed in %.3f s]" % (time.monotonic() - start))
+
+    return file.get_corners_json(uicompos)

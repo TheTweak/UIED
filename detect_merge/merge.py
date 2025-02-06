@@ -9,6 +9,15 @@ import shutil
 from detect_merge.Element import Element
 
 
+def render_elements(org_img, eles, line=2):
+    color_map = {'Text':(0, 0, 255), 'Compo':(0, 255, 0), 'Block':(0, 255, 0), 'Text Content':(255, 0, 255)}
+    img = org_img.copy()
+    for ele in eles:
+        color = color_map[ele.category]
+        ele.visualize_element(img, color, line)
+    return img
+
+
 def show_elements(org_img, eles, show=False, win_name='element', wait_key=0, shown_resize=None, line=2):
     color_map = {'Text':(0, 0, 255), 'Compo':(0, 255, 0), 'Block':(0, 255, 0), 'Text Content':(255, 0, 255)}
     img = org_img.copy()
@@ -233,3 +242,36 @@ def merge(img_path, compo_path, text_path, merge_root=None, is_paragraph=False, 
     cv2.imwrite(pjoin(merge_root, name + '.jpg'), board)
     print('[Merge Completed] Input: %s Output: %s' % (img_path, pjoin(merge_root, name + '.jpg')))
     return board, components
+
+
+def merge2(npimg, compo_json, text_json, is_paragraph=False, is_remove_bar=True):
+    ele_id = 0
+    compos = []
+    for compo in compo_json['compos']:
+        element = Element(ele_id, (compo['column_min'], compo['row_min'], compo['column_max'], compo['row_max']), compo['class'])
+        compos.append(element)
+        ele_id += 1
+    texts = []
+    for text in text_json['texts']:
+        element = Element(ele_id, (text['column_min'], text['row_min'], text['column_max'], text['row_max']), 'Text', text_content=text['content'])
+        texts.append(element)
+        ele_id += 1
+    if compo_json['img_shape'] != text_json['img_shape']:
+        resize_ratio = compo_json['img_shape'][0] / text_json['img_shape'][0]
+        for text in texts:
+            text.resize(resize_ratio)
+
+    # check the original detected elements
+    img_resize = cv2.resize(npimg, (compo_json['img_shape'][1], compo_json['img_shape'][0]))
+    # refine elements
+    texts = refine_texts(texts, compo_json['img_shape'])
+    elements = refine_elements(compos, texts)
+    if is_remove_bar:
+        elements = remove_top_bar(elements, img_height=compo_json['img_shape'][0])
+        elements = remove_bottom_bar(elements, img_height=compo_json['img_shape'][0])
+    if is_paragraph:
+        elements = merge_text_line_to_paragraph(elements, max_line_gap=7)
+    reassign_ids(elements)
+    check_containment(elements)
+    board = render_elements(img_resize, elements)
+    return board

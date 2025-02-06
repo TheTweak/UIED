@@ -64,6 +64,25 @@ def draw_bounding_box(org, components, color=(0, 255, 0), line=2,
     return board
 
 
+def draw_bounding_box2(org, components, color=(0, 255, 0), line=2):
+    """
+    Draw bounding box of components on the original image
+    :param org: original image
+    :param components: bbox [(column_min, row_min, column_max, row_max)]
+                    -> top_left: (column_min, row_min)
+                    -> bottom_right: (column_max, row_max)
+    :param color: line color
+    :param line: line thickness
+    :param show: show or not
+    :return: labeled image
+    """
+    board = org.copy()
+    for compo in components:
+        bbox = compo.put_bbox()
+        board = cv2.rectangle(board, (bbox[0], bbox[1]), (bbox[2], bbox[3]), color, line)
+    return board
+
+
 def draw_line(org, lines, color=(0, 255, 0), show=False):
     """
     Draw detected lines on the original image
