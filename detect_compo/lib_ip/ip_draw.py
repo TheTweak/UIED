@@ -7,7 +7,7 @@ from config.CONFIG_UIED import Config
 C = Config()
 
 
-def draw_bounding_box_class(org, components, color_map=C.COLOR, line=2, show=False, write_path=None, name='board'):
+def draw_bounding_box_class(org, components, color_map=C.COLOR, line=1, show=False, write_path=None, name='board'):
     """
     Draw bounding box of components with their classes on the original image
     :param org: original image
@@ -33,7 +33,7 @@ def draw_bounding_box_class(org, components, color_map=C.COLOR, line=2, show=Fal
     return board
 
 
-def draw_bounding_box(org, components, color=(0, 255, 0), line=2,
+def draw_bounding_box(org, components, color=(0, 255, 0), line=1,
                       show=False, write_path=None, name='board', is_return=False, wait_key=0):
     """
     Draw bounding box of components on the original image
@@ -64,7 +64,7 @@ def draw_bounding_box(org, components, color=(0, 255, 0), line=2,
     return board
 
 
-def draw_bounding_box2(org, components, color=(0, 255, 0), line=2):
+def draw_bounding_box2(org, components, color=(0, 255, 0), line=1):
     """
     Draw bounding box of components on the original image
     :param org: original image

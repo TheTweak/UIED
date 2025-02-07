@@ -7,7 +7,7 @@ from config.CONFIG_UIED import Config
 C = Config()
 
 
-def draw_bounding_box_class(org, components, color=C.COLOR, line=2, show=False, write_path=None):
+def draw_bounding_box_class(org, components, color=C.COLOR, line=1, show=False, write_path=None):
     """
     Draw bounding box of components with their classes on the original image
     :param org: original image

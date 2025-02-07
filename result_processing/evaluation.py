@@ -15,7 +15,7 @@ def resize_label(bboxes, d_height, gt_height, bias=0):
     return bboxes_new
 
 
-def draw_bounding_box(org, corners, color=(0, 255, 0), line=2, show=False):
+def draw_bounding_box(org, corners, color=(0, 255, 0), line=1, show=False):
     board = org.copy()
     for i in range(len(corners)):
         board = cv2.rectangle(board, (corners[i][0], corners[i][1]), (corners[i][2], corners[i][3]), color, line)
