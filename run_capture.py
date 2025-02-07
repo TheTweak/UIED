@@ -41,8 +41,10 @@ if __name__ == '__main__':
             img = sc.grab(mont)
             npimg = np.array(img)
 
-            resized_height = resize_height_by_longest_edge2(npimg, resize_length=800)
-            compression_quality = 90
+            # resized_height = resize_height_by_longest_edge2(npimg, resize_length=800)
+            resized_height = npimg.shape[0] / 2
+            print(f"resized height: {resized_height}, shape: {npimg.shape[:2]}")
+            compression_quality = 75
             _, encoded_image = cv2.imencode('.jpg', npimg, [cv2.IMWRITE_JPEG_QUALITY, compression_quality])
             compressed_bytes = np.array(encoded_image).tobytes()
                 
