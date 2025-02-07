@@ -5,10 +5,9 @@ import json
 from base64 import b64encode
 import time
 
-YC_FOLDER = os.getenv("YC_FOLDER_ID")
-assert YC_FOLDER
-YC_IAM_TOKEN = os.getenv("YC_IAM_TOKEN")
-assert YC_IAM_TOKEN
+YC_API_KEY = os.getenv("YC_API_KEY")
+assert YC_API_KEY
+print(f"api_key: {YC_API_KEY[:8]}")
 
 def YC_OCR_makeImageData(imgpath):
   with open(imgpath, 'rb') as fid:
@@ -26,8 +25,7 @@ def ocr_detection_yc2(img):
 
     headers = {
         "Content-Type": "application/json",
-        "Authorization": "Bearer {:s}".format(YC_IAM_TOKEN),
-        "x-folder-id": YC_FOLDER,
+        "Authorization": "Api-Key {:s}".format(YC_API_KEY),
         "x-data-logging-enabled": "true"
     }
     start = time.monotonic()
@@ -59,8 +57,7 @@ def ocr_detection_yc(imgpath):
 
     headers = {
         "Content-Type": "application/json",
-        "Authorization": "Bearer {:s}".format(YC_IAM_TOKEN),
-        "x-folder-id": YC_FOLDER,
+        "Authorization": "Api-Key {:s}".format(YC_API_KEY),
         "x-data-logging-enabled": "true"
     }
     start = time.monotonic()
